@@ -1,0 +1,102 @@
+- name: Prepare the node for Kubernetes (Ubuntu 20.04)
+  hosts: all
+  become: yes
+  tasks:
+    - name: Disable swap
+      command: swapoff -a
+      when: ansible_swaptotal_mb > 0
+
+    - name: Comment out swap in fstab
+      replace:
+        path: /etc/fstab
+        regexp: '^([^#].*swap)'
+        replace: '# \1'
+
+    - name: Install required packages
+      apt:
+        name: ['apt-transport-https', 'ca-certificates', 'curl']
+        state: present
+        update_cache: yes
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repo
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Enable and start Docker
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Remove old Kubernetes repo (if exists)
+      file:
+        path: /etc/apt/sources.list.d/kubernetes.list
+        state: absent
+
+    - name: Remove old Kubernetes keyring (if exists)
+      file:
+        path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        state: absent
+
+    - name: Add Kubernetes apt repository 
+      shell: |
+        sudo mkdir -p /etc/apt/keyrings
+        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+      args:
+        executable: /bin/bash
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Kubernetes components
+      apt:
+        name: ['kubelet', 'kubeadm', 'kubectl']
+        state: present
+        update_cache: yes
+
+    - name: Hold Kubernetes packages using dpkg
+      shell: |
+        echo "kubelet hold" | dpkg --set-selections
+        echo "kubeadm hold" | dpkg --set-selections
+        echo "kubectl hold" | dpkg --set-selections
+
+
+- name: Initialize Kubernetes cluster
+  hosts: all
+  become: yes
+  tasks:
+    - name: Run kubeadm init
+      command: kubeadm init --pod-network-cidr=10.244.0.0/16
+      args:
+        creates: /etc/kubernetes/admin.conf
+
+    - name: Set up kube config for ubuntu user
+      become: yes
+      become_user: root
+      shell: |
+        mkdir -p $HOME/.kube
+        cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+        chown $(id -u):$(id -g) $HOME/.kube/config
+
+    - name: Install Flannel network plugin
+      shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+
+    - name: Remove control-plane taint to allow scheduling pods
+      shell: kubectl taint nodes --all node-role.kubernetes.io/control-plane- || true
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
