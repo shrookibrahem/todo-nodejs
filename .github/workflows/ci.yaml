@@ -68,7 +68,7 @@ jobs:
             git config --global user.name "${{ secrets.USER_NAME }}"
             git config --global user.email "${{ secrets.GM }}"
           
-            git add Todo-List-nodejs/k8s
+            git add k8s
             git commit -m "Update k8s manifest with tag ${{github.run_number}}"
             git push
          
