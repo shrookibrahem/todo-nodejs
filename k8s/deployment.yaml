@@ -23,15 +23,3 @@ spec:
                 secretKeyRef:
                   name: mongo-secret
                   key: mongo-uri
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 4000
-            initialDelaySeconds: 10
-            periodSeconds: 5
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 4000
-            initialDelaySeconds: 30
-            periodSeconds: 10
