@@ -59,7 +59,7 @@ jobs:
         env:
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
-          sed -i "s/{{TAG}}/${GITHUB_RUN_NUMBER}/" /home/ansible/Todo-List-nodejs/k8s/deployment.yaml
+          sed -i "s/{{TAG}}/${GITHUB_RUN_NUMBER}/" k8s/deployment.yaml
           
         
 
