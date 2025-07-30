@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: todo-container
-          image: saliibrahem/todo-list-node:18
+          image: saliibrahem/todo-list-node:{{TAG}}
           ports:
             - containerPort: 4000
           env:
