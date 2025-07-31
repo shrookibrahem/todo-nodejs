@@ -1,2 +1,2 @@
 [k8s]
-3.80.186.151 ansible_user=ubuntu ansible_ssh_private_key_file=./sshkeyforec2.pem
+54.163.223.237 ansible_user=ubuntu ansible_ssh_private_key_file=./sshkeyforec2.pem
