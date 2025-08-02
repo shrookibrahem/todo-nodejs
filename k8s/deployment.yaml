@@ -19,4 +19,5 @@ spec:
             - containerPort: 4000
           env:
            - name: MONGO_URI
-             value: "mongodb+srv://shrookali295:Shrook%40123@cluster0.ezp4ooc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+             value: "mongodb+srv://shrookali295:Shrook%40123@cluster0.1hkzuv6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+
